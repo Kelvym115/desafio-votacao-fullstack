@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Java, React e navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Unitários, integração H2, formatação e build
+        run: ./test.sh
+      - name: Instalar Chromium e dependências do Linux
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Fluxos completos em desktop e celular
+        working-directory: frontend
+        run: npm run test:e2e
+      - name: Guardar relatórios
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testes-java-react-navegador
+          retention-days: 7
+          path: |
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+            backend/target/site/jacoco/
+            frontend/playwright-report/
+            frontend/test-results/
+
+  postgres:
+    name: Integração PostgreSQL 17
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: votacao_ci
+          POSTGRES_USER: votacao_ci
+          POSTGRES_PASSWORD: senha_exclusiva_do_banco_temporario_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U votacao_ci -d votacao_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/votacao_ci
+      SPRING_DATASOURCE_USERNAME: votacao_ci
+      SPRING_DATASOURCE_PASSWORD: senha_exclusiva_do_banco_temporario_ci
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      # O teste de reinício configura explicitamente seu arquivo H2 via argumentos.
+      # A suíte HTTP usa as variáveis acima, incluindo Flyway e concorrência no PostgreSQL.
+      - name: Unitários e integração sobre PostgreSQL
+        working-directory: backend
+        run: ./mvnw -B -ntp verify
+      - name: Guardar relatórios PostgreSQL
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testes-postgresql
+          retention-days: 7
+          path: |
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+            backend/target/site/jacoco/
+
+  docker:
+    name: Imagem completa e persistência PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Validar compose e construir aplicação
+        run: |
+          docker compose config --quiet
+          docker compose up --build --detach
+      - name: Conferir interface, API e voto único
+        run: python3 scripts/smoke.py create --state-file "$RUNNER_TEMP/votacao-smoke.json"
+      - name: Recriar containers preservando o volume
+        run: |
+          docker compose down
+          docker compose up --detach
+      - name: Conferir pauta, sessão e votos após reinício
+        run: python3 scripts/smoke.py verify --state-file "$RUNNER_TEMP/votacao-smoke.json"
+      - name: Diagnóstico dos containers
+        if: always()
+        run: |
+          docker compose ps --all
+          docker compose logs --no-color
+      - name: Encerrar ambiente temporário
+        if: always()
+        run: docker compose down --volumes

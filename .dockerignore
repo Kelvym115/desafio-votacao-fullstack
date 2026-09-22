@@ -1,0 +1,13 @@
+**/node_modules
+**/target
+**/dist
+**/data
+**/coverage
+**/test-results
+**/playwright-report
+.cache
+.tools
+.run
+.git
+.env
+*.log
