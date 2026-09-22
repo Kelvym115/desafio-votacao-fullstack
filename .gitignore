@@ -1,0 +1,17 @@
+node_modules/
+dist/
+target/
+.tools/
+.cache/
+.m2/
+.run/
+data/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
