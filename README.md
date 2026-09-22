@@ -1,86 +1,131 @@
-# Votação
+# Pauta — votação em assembleias
 
-## Objetivo
+Aplicação fullstack para cadastrar pautas, abrir sessões com prazo, receber um voto por associado em cada pauta e acompanhar o resultado. Backend Java/Spring Boot e interface React/TypeScript.
 
-No cooperativismo, cada associado possui um voto e as decisões são tomadas em assembleias, por votação. Imagine que você deve criar uma solução we para gerenciar e participar dessas sessões de votação.
-Essa solução deve ser executada na nuvem e promover as seguintes funcionalidades através de uma API REST / Front:
+Solução do [desafio original](docs/enunciado.md), com testes unitários, integração HTTP/banco e testes no navegador. Consulte a [conferência dos requisitos](docs/entrega.md) e as [evidências de validação](docs/validacao.md).
 
-- Cadastrar uma nova pauta
-- Abrir uma sessão de votação em uma pauta (a sessão de votação deve ficar aberta por
-  um tempo determinado na chamada de abertura ou 1 minuto por default)
-- Receber votos dos associados em pautas (os votos são apenas 'Sim'/'Não'. Cada associado
-  é identificado por um id único e pode votar apenas uma vez por pauta)
-- Contabilizar os votos e dar o resultado da votação na pauta
+## Executar localmente
 
-Para fins de exercício, a segurança das interfaces pode ser abstraída e qualquer chamada para as interfaces pode ser considerada como autorizada. A solução deve ser construída em java com Spring-boot e Angular/React conforme orientação, mas os frameworks e bibliotecas são de livre escolha (desde que não infrinja direitos de uso).
+Pré-requisitos: **JDK 17 ou superior**, **Node.js 24 LTS** (ou 22.12+) e acesso à internet na primeira execução para baixar dependências. Não é necessário instalar Maven, Docker ou um servidor de banco para este modo.
 
-É importante que as pautas e os votos sejam persistidos e que não sejam perdidos com o restart da aplicação.
+Clone o fork e selecione a branch da solução:
 
-## Como proceder
-
-Por favor, realize o FORK desse repositório e implemente sua solução no FORK em seu repositório GItHub, ao final, notifique da conclusão para que possamos analisar o código implementado.
-
-Lembre de deixar todas as orientações necessárias para executar o seu código.
-
-### Tarefas bônus
-
-- Tarefa Bônus 1 - Integração com sistemas externos
-  - Criar uma Facade/Client Fake que retorna aleátoriamente se um CPF recebido é válido ou não.
-  - Caso o CPF seja inválido, a API retornará o HTTP Status 404 (Not found). Você pode usar geradores de CPF para gerar CPFs válidos
-  - Caso o CPF seja válido, a API retornará se o usuário pode (ABLE_TO_VOTE) ou não pode (UNABLE_TO_VOTE) executar a operação. Essa operação retorna resultados aleatórios, portanto um mesmo CPF pode funcionar em um teste e não funcionar no outro.
-
-```
-// CPF Ok para votar
-{
-    "status": "ABLE_TO_VOTE
-}
-// CPF Nao Ok para votar - retornar 404 no client tb
-{
-    "status": "UNABLE_TO_VOTE
-}
+```bash
+git clone --branch codex/desafio-votacao-fullstack https://github.com/Kelvym115/desafio-votacao-fullstack.git
+cd desafio-votacao-fullstack
 ```
 
-Exemplos de retorno do serviço
+Na pasta deste README:
 
-### Tarefa Bônus 2 - Performance
+```bash
+./dev.sh
+```
 
-- Imagine que sua aplicação possa ser usada em cenários que existam centenas de
-  milhares de votos. Ela deve se comportar de maneira performática nesses
-  cenários
-- Testes de performance são uma boa maneira de garantir e observar como sua
-  aplicação se comporta
+Abra **http://localhost:5173**. O script instala dependências com o lockfile, compila o backend e inicia os dois processos. `Ctrl+C` encerra os processos e preserva o banco. Se usar nvm, `nvm install && nvm use` seleciona a versão indicada no `.nvmrc`; o script também reconhece Node 24/22 compatível já instalado pelo nvm.
 
-### Tarefa Bônus 3 - Versionamento da API
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI: http://localhost:8080/v3/api-docs
+- Health: http://localhost:8080/actuator/health
+- Log local do backend: `.run/backend.log`
 
-○ Como você versionaria a API da sua aplicação? Que estratégia usar?
+O H2 grava os dados em **`backend/data/`**. Encerrar e iniciar novamente a aplicação não apaga pautas, sessões ou votos. O banco não depende do navegador. Remover essa pasta apaga os dados locais; não faça isso para apenas reiniciar a aplicação.
 
-## O que será analisado
+Portas ocupadas são reportadas pelo script, que não encerra processos existentes. Para uso individual pela IDE, execute `./mvnw spring-boot:run` na pasta `backend` e `npm run dev` na pasta `frontend`.
 
-- Simplicidade no design da solução (evitar over engineering)
-- Organização do código
-- Arquitetura do projeto
-- Boas práticas de programação (manutenibilidade, legibilidade etc)
-- Possíveis bugs
-- Tratamento de erros e exceções
-- Explicação breve do porquê das escolhas tomadas durante o desenvolvimento da solução
-- Uso de testes automatizados e ferramentas de qualidade
-- Limpeza do código
-- Documentação do código e da API
-- Logs da aplicação
-- Mensagens e organização dos commits
-- Testes
-- Layout responsivo
+## Roteiro de teste manual
 
-## Dicas
+1. Cadastre uma pauta com título e descrição opcional.
+2. Selecione a pauta e abra uma sessão. Sem duração personalizada, ela dura **1 minuto**.
+3. Informe uma identificação de associado, escolha Sim ou Não e confirme.
+4. Tente votar de novo com o mesmo associado: a aplicação deve impedir a repetição.
+5. Use outra identificação e confira a contagem de votos.
+6. Aguarde o prazo: a sessão encerra e o resultado passa de parcial para final.
+7. Reinicie a aplicação e confira que os dados continuam disponíveis.
 
-- Teste bem sua solução, evite bugs
+Para o fluxo principal, deixe a simulação de CPF desativada. Quando um CPF é informado, o cliente fake pode rejeitar o voto aleatoriamente, conforme o bônus do enunciado; isso não representa uma consulta real a qualquer órgão.
 
-  Observações importantes
-- Não inicie o teste sem sanar todas as dúvidas
-- Iremos executar a aplicação para testá-la, cuide com qualquer dependência externa e
-  deixe claro caso haja instruções especiais para execução do mesmo
-  Classificação da informação: Uso Interno
+## Testes automatizados
 
+```bash
+# Unitários + integração do backend, testes do frontend e build TypeScript/produção
+./test.sh
 
+# Inclui teste de ponta a ponta com navegador Chromium e API reais
+./test.sh --e2e
+```
 
-# desafio-votacao
+O primeiro teste de navegador baixa o Chromium. Seus dados ficam separados do banco local de uso manual. O teste de persistência usa seu próprio arquivo temporário e reinicia o contexto da aplicação sobre o mesmo banco.
+
+Comandos individuais:
+
+```bash
+cd backend
+./mvnw test       # Unitários
+./mvnw verify     # Unitários + integração + relatório de cobertura
+
+cd ../frontend
+npm ci
+npm test
+npm run build
+```
+
+Relatórios: `backend/target/surefire-reports/`, `backend/target/failsafe-reports/` e `backend/target/site/jacoco/index.html`. A evidência da execução feita neste projeto fica em [docs/validacao.md](docs/validacao.md).
+
+Para reproduzir a medição de carga, execute o script contra uma instância dedicada a testes:
+
+```bash
+python3 scripts/performance.py --base-url http://localhost:8080/api/v1 --votes 100000 --workers 20
+```
+
+O script cria uma pauta própria com associados sintéticos e mantém esses dados para inspeção. Ele confirma a contagem persistida e devolve erro se alguma requisição falhar. O [relatório de carga local](docs/performance-local.json) registra uma execução real, com suas limitações descritas na validação.
+
+## Regras e API
+
+O [contrato documentado](docs/contrato.md) contém entradas, saídas, limites e erros. A API é versionada pelo caminho `/api/v1`.
+
+```bash
+curl -i http://localhost:8080/api/v1/pautas \
+  -H 'Content-Type: application/json' \
+  -d '{"titulo":"Novo horário da assembleia","descricao":"Votação de exemplo"}'
+
+# Troque 1 pelo id devolvido na criação.
+curl -i http://localhost:8080/api/v1/pautas/1/sessoes \
+  -H 'Content-Type: application/json' -d '{"duracaoMinutos":5}'
+
+curl -i http://localhost:8080/api/v1/pautas/1/votos \
+  -H 'Content-Type: application/json' \
+  -d '{"associadoId":"associado-exemplo","voto":"SIM"}'
+
+curl http://localhost:8080/api/v1/pautas/1/resultado
+```
+
+Autenticação é dispensada pelo enunciado. A identificação do associado é fornecida pelo cliente; não há comprovação de identidade. Isso é uma simplificação do exercício e precisa ser revisto antes de um uso real.
+
+## Docker e PostgreSQL
+
+Também há uma opção que empacota a interface junto do backend e usa PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+Nesse modo, a aplicação e o Swagger ficam em **http://localhost:8080**, e o volume `postgres-data` mantém os dados. `docker compose down` preserva o volume; a opção `-v` remove seus dados. A senha de exemplo no compose é exclusiva para desenvolvimento; use configuração própria fora da máquina local.
+
+O perfil `postgres` aceita `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` e `SPRING_DATASOURCE_PASSWORD`. Para hospedar a imagem, configure essas variáveis, `SPRING_PROFILES_ACTIVE=postgres` e um PostgreSQL persistente. A aplicação aceita a porta por `PORT` (padrão 8080), serve a interface na raiz e expõe health em `/actuator/health`. Credenciais devem ser configuradas no serviço de hospedagem, sem incluí-las no Git.
+
+O [workflow de CI](.github/workflows/ci.yml) verifica testes com H2, testes com PostgreSQL 17, navegador e execução da imagem Docker. O estágio Docker também reinicia a aplicação e confere a persistência dos dados. O ambiente e as verificações efetivamente concluídas estão no [registro de validação](docs/validacao.md); a situação da hospedagem está na [conferência da entrega](docs/entrega.md).
+
+## Organização e decisões
+
+```text
+backend/       API, migrações de banco e testes Java
+frontend/      Interface React, testes de componentes e de navegador
+scripts/       Execução compartilhada e teste de desempenho
+docs/          Contrato, decisões e evidências de validação
+dev.sh         Inicia a aplicação local
+test.sh        Executa testes e build
+```
+
+[Decisões e arquitetura](docs/arquitetura.md) explica a organização, os cuidados com concorrência/tempo, o uso de H2 e PostgreSQL e as limitações conhecidas. A licença MIT do repositório de origem foi preservada em [LICENSE](LICENSE).

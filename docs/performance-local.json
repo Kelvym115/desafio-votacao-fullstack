@@ -1,0 +1,37 @@
+{
+  "medido_em_utc": "2026-09-22T14:46:55.727272+00:00",
+  "cliente": {
+    "python": "3.9.6",
+    "sistema": "macOS-26.6-arm64-arm-64bit",
+    "cpus_logicas": 8
+  },
+  "pauta_id": 2,
+  "base_url": "http://127.0.0.1:18081/api/v1",
+  "votos_solicitados": 100000,
+  "workers": 20,
+  "duracao_segundos": 39.9,
+  "requisicoes_por_segundo": 2506.25,
+  "votos_aceitos_por_segundo": 2506.25,
+  "http_status": {
+    "201": 100000
+  },
+  "latencia_ms": {
+    "min": 0.41,
+    "p50": 6.3,
+    "p95": 17.95,
+    "p99": 32.17,
+    "max": 295.11
+  },
+  "consulta_resultado_ms": 116.81,
+  "resultado": {
+    "pautaId": 2,
+    "sim": 50000,
+    "nao": 50000,
+    "total": 100000,
+    "status": "ABERTA",
+    "resultado": "EM_ANDAMENTO"
+  },
+  "persistencia_coerente": true,
+  "amostras_de_erros": [],
+  "limite_da_medicao": "Inclui overhead do cliente Python e HTTP; não é garantia de capacidade de produção."
+}
