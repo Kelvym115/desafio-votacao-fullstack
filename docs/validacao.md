@@ -79,9 +79,30 @@ A [execução 35799815102](https://github.com/Kelvym115/desafio-votacao-fullstac
 
 Os logs confirmaram PostgreSQL **17.11** na imagem usada. Os relatórios JUnit/JaCoCo e Playwright são anexados como artefatos da CI com retenção de 7 dias; os testes podem ser reproduzidos pelo workflow. Isso comprova execução em Linux/PostgreSQL/Docker, mas não uma hospedagem pública permanente.
 
-## Limites da validação local
+## Publicação e validação na nuvem em 2026-09-22
+
+Aplicação disponível em **[https://pautas.holomind.dev](https://pautas.holomind.dev)**, com [Swagger UI](https://pautas.holomind.dev/swagger-ui/index.html). O ambiente usa Ubuntu 24.04 ARM64, Docker Compose, Java 17, PostgreSQL 17 e Caddy numa VM EC2 `t4g.small`. O DNS e o proxy da Cloudflare usam HTTPS estrito até a origem. O site independe do computador de desenvolvimento.
+
+A [execução 35801812696 da CI](https://github.com/Kelvym115/desafio-votacao-fullstack/actions/runs/35801812696), sobre o commit `ed13a7e328280576d87f47c5ddf356bd4faf976c` usado no servidor, aprovou os **quatro jobs**: Java/React/navegador, integração PostgreSQL, Docker AMD64 e Docker ARM64. Ambos os jobs Docker verificaram o compose local e o compose de produção com Caddy, incluindo recriação dos containers e preservação dos votos. O runtime Temurin 17 Jammy substitui a imagem Alpine sem suporte ARM64 nessa versão.
+
+| Verificação pública | Resultado observado |
+| --- | --- |
+| HTTPS da origem | Certificado emitido pelo Let's Encrypt; conexão verificada sem desabilitar validação TLS |
+| HTTPS pelo proxy Cloudflare | HTTP 200 e health `UP`; API com `Cache-Control: no-store` e `cf-cache-status: DYNAMIC` |
+| Swagger e OpenAPI | HTTP 200; 6 caminhos de API e URL de servidor `https://pautas.holomind.dev` |
+| Smoke sobre o domínio público | Interface, criação de pauta/sessão, votos Sim/Não, total 2 e repetição recusada com 409 |
+| Reinício completo da VM | Docker e os três containers voltaram automaticamente; smoke recuperou a mesma pauta, sessão, datas e contagens; repetição permaneceu bloqueada |
+| Playwright contra a implantação | **4 testes passaram** em 14,4 s: fluxos completos, recarga, busca, foco e layout em desktop e Pixel 7 emulado |
+| Recursos após reinício | Containers de aplicação e banco saudáveis; aproximadamente 1,0 GiB de memória disponível, sem swap, na leitura feita após o smoke |
+
+Durante a publicação, o resolvedor do macOS manteve uma resposta negativa para o novo domínio. As primeiras execuções de navegador falharam por DNS. Cloudflare (1.1.1.1), Google (8.8.8.8), o resolvedor de rede e a VM já resolviam o registro. Para a execução aprovada, somente os processos de teste resolveram o hostname para o IP público confirmado da Cloudflare; domínio, HTTPS, API e banco permaneceram reais, com validação do certificado. Nenhuma configuração permanente de DNS foi alterada. Esse ajuste temporário ficou fora do código publicado.
+
+As pautas sintéticas criadas pelos testes foram mantidas para inspeção. A carga de 100 mil votos não foi executada na VM pública; os números de desempenho acima continuam exclusivos do ambiente local.
+
+## Limites da validação e hospedagem
 
 - O Docker não estava disponível na máquina macOS. A validação local de banco foi com H2 real, em memória para parte dos testes e em arquivo para reinício/carga. Docker e PostgreSQL são verificados separadamente na CI; uma configuração de CI, por si só, não comprova sua execução bem-sucedida.
-- Hospedagem pública ainda pendente; executar CI não substitui disponibilizar a aplicação para avaliação na nuvem.
+- A demonstração usa uma única VM, sem alta disponibilidade. O backup feito antes das atualizações fica no mesmo disco; sua exportação é necessária para proteger contra perda do servidor.
+- A oferta de processamento T4g tem prazo e franquia. Disco/IP têm cobrança separada; custos e encerramento estão no [guia de hospedagem](../deploy/README.md).
 - O navegador usado foi Chromium, em desktop e emulação Pixel 7. Outros motores e aparelhos físicos não foram testados.
 - A autorização é dispensada no exercício; identidade de associado fornecida pelo cliente e o CPF fake não atendem a um cenário de produção com identidade verificada.

@@ -52,6 +52,14 @@ React/TypeScript organiza os fluxos de cadastro, sessão, voto e resultado. Esta
 
 O proxy do Vite mantém chamadas relativas a `/api` no desenvolvimento. Na imagem Docker, o frontend é servido pelo próprio backend, na mesma origem. Isso dispensa liberar CORS indiscriminadamente.
 
+## Hospedagem da demonstração
+
+A implantação usa uma VM Ubuntu 24.04 ARM64 com Docker Compose: Caddy recebe HTTPS, encaminha para Spring Boot e o backend consulta PostgreSQL 17. O React compilado está dentro do JAR, portanto interface e API compartilham domínio. O runtime Java usa Eclipse Temurin 17 sobre Ubuntu Jammy, disponível para AMD64 e ARM64; as duas arquiteturas são verificadas na CI.
+
+Somente o proxy publica portas HTTP/HTTPS. Banco e aplicação comunicam-se pelas redes dos containers, e a administração SSH aceita apenas o IP configurado do administrador. Credenciais são geradas no servidor, fora do Git. Volumes guardam os dados PostgreSQL e os certificados do Caddy; a política de reinício dos containers e o serviço Docker permitem recuperar a aplicação após reiniciar a VM.
+
+Uma VM única simplifica a avaliação, mas não oferece alta disponibilidade. O dump antes de cada atualização protege contra falhas de atualização; como fica no mesmo servidor, não protege contra perda do disco. Para um serviço real, seriam necessários backups externos com restauração testada, monitoramento, identidade verificada e dimensionamento medido. O [guia de hospedagem](../deploy/README.md) registra operação, custos e encerramento dos recursos.
+
 ## Bônus
 
 - **Versionamento:** `/api/v1`. Mudanças incompatíveis devem entrar em outra versão, mantendo clientes existentes durante a migração. Mudanças aditivas compatíveis não exigem trocar a versão automaticamente.

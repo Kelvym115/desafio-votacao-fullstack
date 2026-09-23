@@ -16,7 +16,7 @@ Revisão em 2026-09-22, a partir do [enunciado preservado](enunciado.md) e das o
 | Erros, logs e documentação de API | ProblemDetail, logs sem payload pessoal, OpenAPI e Swagger UI |
 | Explicação das escolhas | [Arquitetura](arquitetura.md) e [contrato](contrato.md) |
 | Fork e PR | [Fork](https://github.com/Kelvym115/desafio-votacao-fullstack/tree/codex/desafio-votacao-fullstack) e [PR #63 aberto](https://github.com/somosdb/desafio-votacao-fullstack/pull/63) para `somosdb/main` |
-| Executar na nuvem | **Pendente de definição e conexão do ambiente de hospedagem**. CI não equivale a uma URL pública de avaliação. |
+| Executar na nuvem | [Aplicação pública com HTTPS](https://pautas.holomind.dev), React + Java + PostgreSQL em VM; pauta, sessão, datas e votos conferidos após reinício completo do servidor |
 
 Os testes executados, os números e as limitações constam no [registro de validação](validacao.md). Não há serviço de autenticação, conforme a dispensa no enunciado. Uma única sessão por pauta e a duração em minutos inteiros são decisões explícitas, pois esses detalhes não foram especificados.
 
@@ -29,5 +29,6 @@ Os testes executados, os números e as limitações constam no [registro de vali
 ## Verificação adicional da entrega
 
 - O status de sessão do servidor controla a votação na interface. O contador do navegador é apenas uma estimativa, para evitar que relógios adiantados bloqueiem uma votação válida.
-- A [CI passou nos três jobs](https://github.com/Kelvym115/desafio-votacao-fullstack/actions/runs/35799815102): Linux/Java/React/navegador, integração com PostgreSQL e imagem Docker com reinício preservando os dados.
+- A [CI passou nos quatro jobs](https://github.com/Kelvym115/desafio-votacao-fullstack/actions/runs/35801812696): Linux/Java/React/navegador, integração com PostgreSQL e imagem Docker em AMD64 e ARM64. As duas arquiteturas validam também Caddy/compose de produção e reinício preservando os dados.
+- [Swagger UI público](https://pautas.holomind.dev/swagger-ui/index.html) e [OpenAPI](https://pautas.holomind.dev/v3/api-docs) disponíveis no mesmo domínio da aplicação.
 - Apenas código e documentação técnica são publicados. Bancos locais, credenciais, caches e anotações do processo seletivo ficam fora do repositório.

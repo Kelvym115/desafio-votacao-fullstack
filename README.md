@@ -4,6 +4,10 @@ Aplicação fullstack para cadastrar pautas, abrir sessões com prazo, receber u
 
 Solução do [desafio original](docs/enunciado.md), com testes unitários, integração HTTP/banco e testes no navegador. Consulte a [conferência dos requisitos](docs/entrega.md) e as [evidências de validação](docs/validacao.md).
 
+**Aplicação publicada:** [pautas.holomind.dev](https://pautas.holomind.dev) · [Swagger UI](https://pautas.holomind.dev/swagger-ui/index.html) · [Pull request da entrega](https://github.com/somosdb/desafio-votacao-fullstack/pull/63).
+
+A demonstração usa PostgreSQL persistente, HTTPS e uma VM dedicada; continua disponível com o computador do desenvolvedor desligado. Os dados identificados como smoke/assembleia de teste foram criados pelas verificações automatizadas. É possível cadastrar uma nova pauta para avaliar o fluxo.
+
 ## Executar localmente
 
 Pré-requisitos: **JDK 17 ou superior**, **Node.js 24 LTS** (ou 22.12+) e acesso à internet na primeira execução para baixar dependências. Não é necessário instalar Maven, Docker ou um servidor de banco para este modo.
@@ -57,6 +61,8 @@ Para o fluxo principal, deixe a simulação de CPF desativada. Quando um CPF é 
 ```
 
 O primeiro teste de navegador baixa o Chromium. Seus dados ficam separados do banco local de uso manual. O teste de persistência usa seu próprio arquivo temporário e reinicia o contexto da aplicação sobre o mesmo banco.
+
+Para testar uma implantação já iniciada, execute na pasta `frontend`: `E2E_BASE_URL=https://pautas.holomind.dev npm run test:e2e`. Nesse modo, o Playwright usa o serviço informado e cria dados sintéticos nele; não inicia os servidores locais de teste.
 
 Comandos individuais:
 
@@ -117,6 +123,8 @@ O perfil `postgres` aceita `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`
 
 O [workflow de CI](.github/workflows/ci.yml) verifica testes com H2, testes com PostgreSQL 17, navegador e execução da imagem Docker. O estágio Docker também reinicia a aplicação e confere a persistência dos dados. O ambiente e as verificações efetivamente concluídas estão no [registro de validação](docs/validacao.md); a situação da hospedagem está na [conferência da entrega](docs/entrega.md).
 
+Para a implantação com domínio e HTTPS, consulte o [guia de hospedagem](deploy/README.md). O compose de produção separa o proxy Caddy, a aplicação e o banco; a imagem é verificada em AMD64 e ARM64. O guia inclui atualização, backup e custos da infraestrutura.
+
 ## Organização e decisões
 
 ```text
@@ -124,6 +132,7 @@ backend/       API, migrações de banco e testes Java
 frontend/      Interface React, testes de componentes e de navegador
 scripts/       Execução compartilhada e teste de desempenho
 docs/          Contrato, decisões e evidências de validação
+deploy/        Implantação em VM, HTTPS e infraestrutura AWS opcional
 dev.sh         Inicia a aplicação local
 test.sh        Executa testes e build
 ```
