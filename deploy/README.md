@@ -15,7 +15,7 @@ sudo ./deploy/install-docker-ubuntu.sh
 sudo ./deploy/start.sh votacao.seu-dominio.com
 ```
 
-O instalador configura o repositório APT oficial do Docker. O segundo comando gera uma senha aleatória apenas na primeira execução e salva a configuração em `/opt/votacao-state/.env`, com acesso somente ao root. Não copiar esse arquivo para o repositório. Os limites de memória da aplicação são definidos no compose de produção.
+O instalador configura o repositório APT oficial do Docker. O segundo comando gera uma senha aleatória apenas na primeira execução e salva a configuração em `/opt/votacao-state/.env`, com acesso somente ao root. Se o volume PostgreSQL já existir e esse arquivo estiver ausente, o script interrompe o deploy para que a configuração original seja restaurada; não gera outra senha para um banco existente. Guarde uma cópia segura desse arquivo fora do repositório. Os limites de memória da aplicação são definidos no compose de produção.
 
 O nome do projeto Compose é fixo (`votacao-desafio`), para manter os mesmos volumes nos próximos deploys. O banco e a API ficam acessíveis apenas pela rede interna dos containers. Somente o Caddy publica portas. Logs têm rotação e não incluem corpos de requisição.
 
@@ -27,7 +27,7 @@ Não é necessário compartilhar um token Cloudflare com o servidor. A alteraç�
 
 ## Atualizar e verificar
 
-Selecione o novo commit aprovado e execute novamente `sudo ./deploy/start.sh <domínio>`. A senha e os volumes existentes são mantidos; um `pg_dump` compactado é criado em `/opt/votacao-state/backups/` antes de atualizar uma instalação em execução.
+Selecione o novo commit aprovado e execute novamente `sudo ./deploy/start.sh <domínio>`. A senha e os volumes existentes são mantidos. Quando o volume PostgreSQL já existe, o script inicia e aguarda apenas o banco, inclusive se ele estiver parado, e cria um `pg_dump` compactado em `/opt/votacao-state/backups/` antes de atualizar a aplicação. O container existente do banco não é recriado nessa etapa. Se a preparação do banco ou o backup falhar, a atualização da aplicação é interrompida.
 
 ```bash
 sudo docker compose --env-file /opt/votacao-state/.env -f deploy/compose.prod.yaml ps
