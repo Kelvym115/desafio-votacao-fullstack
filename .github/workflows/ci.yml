@@ -119,6 +119,33 @@ jobs:
           docker compose up --detach
       - name: Conferir pauta, sessão e votos após reinício
         run: python3 scripts/smoke.py verify --state-file "$RUNNER_TEMP/votacao-smoke.json"
+      - name: Validar configuração de produção e proxy
+        env:
+          DOMAIN: http://127.0.0.1
+          POSTGRES_PASSWORD: senha_apenas_do_ambiente_temporario_ci
+        run: |
+          bash -n deploy/install-docker-ubuntu.sh deploy/start.sh
+          docker compose -f deploy/compose.prod.yaml config --quiet
+          docker compose -f deploy/compose.prod.yaml run --rm --no-deps caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+          docker compose -f deploy/compose.prod.yaml up --build --detach --wait --wait-timeout 180
+      - name: Conferir aplicação por trás do proxy e preservação dos volumes
+        env:
+          DOMAIN: http://127.0.0.1
+          POSTGRES_PASSWORD: senha_apenas_do_ambiente_temporario_ci
+        run: |
+          python3 scripts/smoke.py create --base-url http://127.0.0.1 --state-file "$RUNNER_TEMP/votacao-prod-smoke.json"
+          docker compose -f deploy/compose.prod.yaml down
+          docker compose -f deploy/compose.prod.yaml up --detach --wait --wait-timeout 180
+          python3 scripts/smoke.py verify --base-url http://127.0.0.1 --state-file "$RUNNER_TEMP/votacao-prod-smoke.json"
+      - name: Diagnóstico e encerramento da produção temporária
+        if: always()
+        env:
+          DOMAIN: http://127.0.0.1
+          POSTGRES_PASSWORD: senha_apenas_do_ambiente_temporario_ci
+        run: |
+          docker compose -f deploy/compose.prod.yaml ps --all
+          docker compose -f deploy/compose.prod.yaml logs --no-color
+          docker compose -f deploy/compose.prod.yaml down --volumes
       - name: Diagnóstico dos containers
         if: always()
         run: |

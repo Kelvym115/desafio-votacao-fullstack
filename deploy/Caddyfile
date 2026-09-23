@@ -1,0 +1,16 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	# As respostas da API devem refletir o estado atual da votação.
+	@api path /api/*
+	header @api Cache-Control "no-store"
+
+	reverse_proxy app:8080 {
+		# Caddy define X-Forwarded-{For,Host,Proto}; descarta os demais
+		# cabeçalhos de encaminhamento fornecidos pelo cliente.
+		header_up -Forwarded
+		header_up -X-Forwarded-Port
+		header_up -X-Forwarded-Prefix
+		header_up -X-Forwarded-Ssl
+	}
+}
