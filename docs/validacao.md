@@ -66,6 +66,19 @@ Depois da correção, `./test.sh --e2e` foi executado novamente e concluiu com *
 
 O workflow de CI foi acrescentado para exercitar Linux, PostgreSQL 17 e a imagem completa. A situação e os links da publicação são mantidos em [entrega.md](entrega.md).
 
+## Execução remota no GitHub Actions
+
+A [execução 35799815102](https://github.com/Kelvym115/desafio-votacao-fullstack/actions/runs/35799815102), sobre o commit `effbb332468f01d0699858a626d4834914c8f797`, concluiu os **três jobs com sucesso** em 2026-09-22:
+
+| Ambiente | Evidência |
+| --- | --- |
+| Ubuntu, Java 17 e Node 24 | 45 testes isolados Java + 46 de integração H2 + 23 frontend + 4 navegador; formatação e builds aprovados |
+| PostgreSQL 17 | 45 testes isolados e 46 de integração aprovados; a suíte HTTP (45 casos) usa PostgreSQL e o teste específico de reinício em arquivo continua usando H2 |
+| Docker com frontend empacotado e PostgreSQL | Imagem construída, health UP, HTML e módulo React servidos, criação de pauta/sessão, votos e duplicidade conferidos |
+| Recriação dos containers | `docker compose down` seguido de `up` preservou o volume; mesmas pauta, sessão, datas e contagens recuperadas; voto duplicado continuou retornando 409 |
+
+Os logs confirmaram PostgreSQL **17.11** na imagem usada. Os relatórios JUnit/JaCoCo e Playwright são anexados como artefatos da CI com retenção de 7 dias; os testes podem ser reproduzidos pelo workflow. Isso comprova execução em Linux/PostgreSQL/Docker, mas não uma hospedagem pública permanente.
+
 ## Limites da validação local
 
 - O Docker não estava disponível na máquina macOS. A validação local de banco foi com H2 real, em memória para parte dos testes e em arquivo para reinício/carga. Docker e PostgreSQL são verificados separadamente na CI; uma configuração de CI, por si só, não comprova sua execução bem-sucedida.
