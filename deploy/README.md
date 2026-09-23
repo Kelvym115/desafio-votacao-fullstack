@@ -19,6 +19,14 @@ O instalador configura o repositório APT oficial do Docker. O segundo comando g
 
 O nome do projeto Compose é fixo (`votacao-desafio`), para manter os mesmos volumes nos próximos deploys. O banco e a API ficam acessíveis apenas pela rede interna dos containers. Somente o Caddy publica portas. Logs têm rotação e não incluem corpos de requisição.
 
+## Infraestrutura AWS opcional
+
+`aws-ec2.yaml` descreve uma instância ARM `t4g.small`, disco gp3 criptografado de 20 GB, IPv4 fixo e firewall. Escolha uma AMI Ubuntu ARM64 oficial na região usada, uma VPC/sub-rede pública e o IP do administrador como `/32`. A chave SSH é criada pelo CloudFormation e guardada como parâmetro seguro no SSM; o template não contém credenciais. A instância exige IMDSv2 e usa créditos de CPU no modo `standard`, sem cobrança de créditos excedentes.
+
+Esses recursos **não são todos gratuitos**. A oferta T4g vigente na publicação cobre até 750 horas de computação por mês até 31/12/2026, compartilhadas entre as regiões/contas do mesmo pagador; disco e IPv4 são cobrados separadamente quando não há créditos que os cubram. Na região de Virgínia, a referência para 20 GB gp3 e um IPv4 é aproximadamente US$ 5,25/mês, antes de impostos e tráfego excedente. Confirme condições na [FAQ EC2](https://aws.amazon.com/ec2/faqs/), nos preços de [EBS](https://aws.amazon.com/ebs/volume-types/) e de [IPv4](https://aws.amazon.com/vpc/pricing/).
+
+A exclusão da stack encerra o servidor, libera o IP e remove seu disco. Exporte os dados necessários antes de encerrar a infraestrutura. Mantenha uma nota operacional privada com região, stack e acesso SSH; não publique a chave privada nem o arquivo de ambiente.
+
 ## Cloudflare e HTTPS
 
 Para a primeira emissão de certificado, use DNS-only e confirme que o hostname resolve para o servidor. O Caddy usa ACME e precisa receber as verificações de domínio. Depois de conferir HTTPS no servidor de origem, pode-se ativar o proxy da Cloudflare mantendo **Full (strict)**. Não usar Flexible nem criar cache de respostas da API.

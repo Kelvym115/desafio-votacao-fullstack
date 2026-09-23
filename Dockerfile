@@ -13,8 +13,8 @@ COPY backend/src ./src
 COPY --from=frontend /web/dist ./src/main/resources/static
 RUN mvn -B -ntp -DskipTests package
 
-FROM eclipse-temurin:17-jre-alpine
-RUN addgroup -S votacao && adduser -S votacao -G votacao
+FROM eclipse-temurin:17-jre-jammy
+RUN groupadd --system votacao && useradd --system --gid votacao --home-dir /app --no-create-home --shell /usr/sbin/nologin votacao
 WORKDIR /app
 COPY --from=backend --chown=votacao:votacao /build/target/votacao.jar ./votacao.jar
 USER votacao
